@@ -23,12 +23,21 @@ export default function EntryForm({ onSubmit, loading }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const valid = rows.filter((r) => r.ticker.trim() && parseFloat(r.shares) > 0);
+    const valid = rows.filter((r) => {
+      const ticker = r.ticker.trim();
+      const shares = parseFloat(r.shares);
+      return ticker && shares > 0;
+    });
     if (valid.length < 2) {
       alert("Enter at least 2 valid holdings.");
       return;
     }
-    onSubmit(valid);
+    // Normalize tickers to uppercase and strip whitespace
+    const normalized = valid.map((r) => ({
+      ticker: r.ticker.trim().toUpperCase(),
+      shares: r.shares,
+    }));
+    onSubmit(normalized);
   };
 
   return (

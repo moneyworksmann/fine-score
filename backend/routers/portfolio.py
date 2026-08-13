@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List
-from services.prism_score import compute_prism_score
+from backend.services.prism_score import compute_prism_score
 
 router = APIRouter(prefix="/api", tags=["portfolio"])
 

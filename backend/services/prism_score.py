@@ -14,13 +14,30 @@ MARKET_EVENTS = [
 
 
 def fetch_prices(tickers: List[str], period: str = "5y") -> pd.DataFrame:
-    raw = yf.download(tickers, period=period, auto_adjust=True, progress=False)
+    try:
+        raw = yf.download(tickers, period=period, auto_adjust=True, progress=False)
+    except Exception as e:
+        raise ValueError(f"Error downloading ticker data: {str(e)}")
+    
+    if raw.empty:
+        raise ValueError("No data returned from yfinance. Check your ticker symbols.")
+    
+    # Handle single vs multiple tickers
     if isinstance(raw.columns, pd.MultiIndex):
+        # Multiple tickers - raw has MultiIndex columns (OHLCV, ticker)
         prices = raw["Close"]
     else:
-        prices = raw[["Close"]]
+        # Single ticker - raw has regular columns (Open, High, Low, Close, Adj Close, Volume)
+        if "Close" not in raw.columns:
+            raise ValueError(f"No 'Close' column found in data. Available columns: {list(raw.columns)}")
+        prices = raw[["Close"]].copy()
         prices.columns = tickers
+    
     prices = prices.dropna(how="all")
+    
+    if prices.empty:
+        raise ValueError("All ticker data is NaN. Check your ticker symbols.")
+    
     return prices
 
 
@@ -107,15 +124,22 @@ def score_benchmark(ticker_weights: dict) -> float:
 
 
 def compute_prism_score(holdings):
-    tickers = [h.ticker.upper() for h in holdings]
-    shares = {h.ticker.upper(): h.shares for h in holdings}
+    # Normalize and validate tickers
+    tickers = [h.ticker.upper().strip() for h in holdings]
+    
+    # Check for empty tickers
+    if not all(tickers):
+        raise ValueError("All ticker symbols must be non-empty.")
+    
+    shares = {h.ticker.upper().strip(): h.shares for h in holdings}
 
     prices = fetch_prices(tickers)
 
     # Drop tickers that returned no data
     valid_tickers = [t for t in tickers if t in prices.columns and prices[t].notna().sum() > 10]
     if len(valid_tickers) < 2:
-        raise ValueError("Could not fetch price data for enough tickers. Check your symbols.")
+        invalid = [t for t in tickers if t not in valid_tickers]
+        raise ValueError(f"Could not fetch price data for these tickers: {', '.join(invalid)}. Please check that they are valid stock symbols.")
 
     prices = prices[valid_tickers]
     latest_prices = prices.iloc[-1]
