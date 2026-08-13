@@ -34,7 +34,7 @@ export default function EntryForm({ onSubmit, loading }: Props) {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.title}>FINE Score</h1>
+        <h1 style={styles.title}>PRISM Score</h1>
         <p style={styles.subtitle}>
           Enter your stock holdings to get your portfolio health score.
         </p>
@@ -79,7 +79,7 @@ export default function EntryForm({ onSubmit, loading }: Props) {
           </button>
 
           <button type="submit" style={styles.submitBtn} disabled={loading}>
-            {loading ? "Analyzing…" : "Calculate FINE Score"}
+            {loading ? "Analyzing…" : "Calculate PRISM Score"}
           </button>
         </form>
 

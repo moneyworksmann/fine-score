@@ -78,7 +78,35 @@ def score_exposure(weights: dict) -> float:
     return round(min(100.0, score), 1)
 
 
-def compute_fine_score(holdings):
+def score_benchmark(ticker_weights: dict) -> float:
+    """Compute PRISM score for a fixed-weight benchmark portfolio."""
+    tickers = list(ticker_weights.keys())
+    prices = fetch_prices(tickers)
+    valid = [t for t in tickers if t in prices.columns and prices[t].notna().sum() > 10]
+    if len(valid) < 1:
+        return 0.0
+    prices = prices[valid]
+    total_w = sum(ticker_weights[t] for t in valid)
+    weights = {t: ticker_weights[t] / total_w for t in valid}
+    sectors: dict = {}
+    for t in valid:
+        sectors[t] = get_sector(t)
+    sector_weights: dict = {}
+    for t, w in weights.items():
+        s = sectors[t]
+        sector_weights[s] = sector_weights.get(s, 0) + w
+    returns = prices.pct_change().dropna()
+    weight_array = np.array([weights[t] for t in valid])
+    port_returns = pd.Series(returns[valid].values @ weight_array, index=returns.index)
+    corr_matrix = returns[valid].corr() if len(valid) > 1 else pd.DataFrame([[1.0]], index=valid, columns=valid)
+    f = score_diversification(sector_weights)
+    i = score_correlation(corr_matrix)
+    n = score_volatility(port_returns)
+    e = score_exposure(weights)
+    return round((f + i + n + e) / 4, 1)
+
+
+def compute_prism_score(holdings):
     tickers = [h.ticker.upper() for h in holdings]
     shares = {h.ticker.upper(): h.shares for h in holdings}
 
@@ -123,7 +151,7 @@ def compute_fine_score(holdings):
     n_score = score_volatility(portfolio_returns)
     e_score = score_exposure(weights)
 
-    fine_score = round((f_score + i_score + n_score + e_score) / 4, 1)
+    prism_score = round((f_score + i_score + n_score + e_score) / 4, 1)
 
     # Backtest vs S&P 500
     spy_prices = fetch_prices(["SPY"])
@@ -152,8 +180,16 @@ def compute_fine_score(holdings):
     # Biggest risk callout
     callout = _generate_callout(f_score, i_score, n_score, e_score, sector_weights, weights, corr_matrix, valid_tickers)
 
+    # Benchmark scores
+    spy_benchmark = score_benchmark({"SPY": 1.0})
+    three_fund_benchmark = score_benchmark({"VTI": 0.60, "VXUS": 0.20, "BND": 0.20})
+
     return {
-        "fine_score": fine_score,
+        "prism_score": prism_score,
+        "benchmarks": {
+            "spy": {"label": "S&P 500 (SPY)", "score": spy_benchmark},
+            "three_fund": {"label": "3-Fund Portfolio", "score": three_fund_benchmark},
+        },
         "sub_scores": {"F": f_score, "I": i_score, "N": n_score, "E": e_score},
         "sector_weights": {k: round(v, 4) for k, v in sector_weights.items()},
         "weights": {k: round(v, 4) for k, v in weights.items()},

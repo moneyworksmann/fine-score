@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import portfolio
 
-app = FastAPI(title="FINE Score API")
+app = FastAPI(title="PRISM Score API")
 
 app.add_middleware(
     CORSMiddleware,

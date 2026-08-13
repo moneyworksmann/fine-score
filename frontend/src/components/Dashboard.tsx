@@ -95,10 +95,32 @@ function CorrelationHeatmap({ matrix }: { matrix: AnalysisResult["correlation_ma
   );
 }
 
+function BenchmarkBar({ label, score, highlight }: { label: string; score: number; highlight?: boolean }) {
+  return (
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+        <span style={{ color: highlight ? "#ffffff" : "#8888a0", fontSize: "0.8rem", fontWeight: highlight ? 600 : 400 }}>
+          {label}
+        </span>
+        <span style={{ color: scoreColor(score), fontWeight: 700, fontSize: "0.9rem" }}>{score}</span>
+      </div>
+      <div style={{ height: "8px", background: "#2a2a3a", borderRadius: "99px", overflow: "hidden" }}>
+        <div style={{
+          height: "100%",
+          width: `${score}%`,
+          background: highlight ? scoreColor(score) : "#3a3a55",
+          borderRadius: "99px",
+          transition: "width 0.6s ease",
+        }} />
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard({ result, onBack, onBacktest }: Props) {
-  const { fine_score, sub_scores, sector_weights, correlation_matrix, callout } = result;
-  const color = scoreColor(fine_score);
-  const label = scoreLabel(fine_score);
+  const { prism_score, benchmarks, sub_scores, sector_weights, correlation_matrix, callout } = result;
+  const color = scoreColor(prism_score);
+  const label = scoreLabel(prism_score);
 
   const sectorData = Object.entries(sector_weights)
     .map(([name, value]) => ({ name, value: Math.round(value * 100) }))
@@ -117,14 +139,14 @@ export default function Dashboard({ result, onBack, onBacktest }: Props) {
         {/* Header */}
         <div style={styles.topBar}>
           <button style={styles.backBtn} onClick={onBack}>← Back</button>
-          <h2 style={styles.pageTitle}>FINE Score</h2>
+          <h2 style={styles.pageTitle}>PRISM Score</h2>
           <button style={styles.backtestBtn} onClick={onBacktest}>Backtest →</button>
         </div>
 
         {/* Score gauge */}
         <div style={styles.gaugeCard}>
           <div style={{ ...styles.gauge, borderColor: color }}>
-            <span style={{ ...styles.gaugeNumber, color }}>{fine_score}</span>
+            <span style={{ ...styles.gaugeNumber, color }}>{prism_score}</span>
             <span style={styles.gaugeLabel}>{label}</span>
           </div>
 
@@ -132,6 +154,16 @@ export default function Dashboard({ result, onBack, onBacktest }: Props) {
           <div style={styles.callout}>
             <span style={styles.calloutIcon}>⚠</span>
             <p style={styles.calloutText}>{callout}</p>
+          </div>
+        </div>
+
+        {/* Benchmark comparison */}
+        <div style={styles.card}>
+          <h3 style={styles.cardTitle}>How You Compare</h3>
+          <div style={styles.benchmarkRow}>
+            <BenchmarkBar label="Your Portfolio" score={prism_score} highlight />
+            <BenchmarkBar label={benchmarks.spy.label} score={benchmarks.spy.score} />
+            <BenchmarkBar label={benchmarks.three_fund.label} score={benchmarks.three_fund.score} />
           </div>
         </div>
 
@@ -202,4 +234,5 @@ const styles: Record<string, React.CSSProperties> = {
   barTrack: { height: "6px", background: "#2a2a3a", borderRadius: "99px", overflow: "hidden" },
   barFill: { height: "100%", borderRadius: "99px", transition: "width 0.6s ease" },
   heatmapHint: { color: "#555570", fontSize: "0.75rem", margin: "0 0 16px" },
+  benchmarkRow: { display: "flex", flexDirection: "column", gap: "16px" },
 };

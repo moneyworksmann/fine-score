@@ -29,8 +29,14 @@ export interface Backtest {
   stats: BacktestStats;
 }
 
+export interface Benchmark {
+  label: string;
+  score: number;
+}
+
 export interface AnalysisResult {
-  fine_score: number;
+  prism_score: number;
+  benchmarks: { spy: Benchmark; three_fund: Benchmark };
   sub_scores: SubScores;
   sector_weights: Record<string, number>;
   weights: Record<string, number>;
