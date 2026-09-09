@@ -1,6 +1,7 @@
 export interface Holding {
   ticker: string;
   shares: string;
+  acquired_at?: string; // YYYY-MM-DD
 }
 
 export interface SubScores {
@@ -26,7 +27,17 @@ export interface Backtest {
   dates: string[];
   portfolio: number[];
   spy: number[];
+  start_date: string | null;
   stats: BacktestStats;
+}
+
+export interface PersonalReturn {
+  ticker: string;
+  acquired_at: string;
+  holding_return_pct: number;
+  spy_return_pct: number;
+  days_held: number;
+  outperforming: boolean;
 }
 
 export interface Benchmark {
@@ -42,5 +53,6 @@ export interface AnalysisResult {
   weights: Record<string, number>;
   correlation_matrix: CorrelationMatrix;
   backtest: Backtest;
+  personal_returns: PersonalReturn[];
   callout: string;
 }

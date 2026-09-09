@@ -5,7 +5,11 @@ const BASE = "http://localhost:8000/api";
 
 export async function analyzePortfolio(holdings: Holding[]): Promise<AnalysisResult> {
   const payload = {
-    holdings: holdings.map((h) => ({ ticker: h.ticker, shares: parseFloat(h.shares) })),
+    holdings: holdings.map((h) => ({
+      ticker: h.ticker,
+      shares: parseFloat(h.shares),
+      acquired_at: h.acquired_at || null,
+    })),
   };
   const { data } = await axios.post<AnalysisResult>(`${BASE}/analyze`, payload);
   return data;

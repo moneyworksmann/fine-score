@@ -4,22 +4,27 @@ import { Holding } from "../types";
 interface Props {
   onSubmit: (holdings: Holding[]) => void;
   loading: boolean;
+  initialHoldings?: Holding[];
 }
 
-const EMPTY_ROW: Holding = { ticker: "", shares: "" };
+const EMPTY_ROW: Holding = { ticker: "", shares: "", acquired_at: "" };
 
-export default function EntryForm({ onSubmit, loading }: Props) {
-  const [rows, setRows] = useState<Holding[]>([
-    { ticker: "", shares: "" },
-    { ticker: "", shares: "" },
-  ]);
+export default function EntryForm({ onSubmit, loading, initialHoldings }: Props) {
+  const [rows, setRows] = useState<Holding[]>(
+    initialHoldings && initialHoldings.length >= 2
+      ? initialHoldings
+      : [{ ...EMPTY_ROW }, { ...EMPTY_ROW }]
+  );
 
   const update = (i: number, field: keyof Holding, value: string) => {
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, [field]: value } : r)));
   };
 
   const addRow = () => setRows((prev) => [...prev, { ...EMPTY_ROW }]);
-  const removeRow = (i: number) => setRows((prev) => prev.filter((_, idx) => idx !== i));
+  const removeRow = (i: number) => {
+    if (rows.length <= 2) return;
+    setRows((prev) => prev.filter((_, idx) => idx !== i));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,32 +50,40 @@ export default function EntryForm({ onSubmit, loading }: Props) {
       <div style={styles.card}>
         <h1 style={styles.title}>PRISM Score</h1>
         <p style={styles.subtitle}>
-          Enter your stock holdings to get your portfolio health score.
+          Enter your holdings to get your portfolio health score.
         </p>
 
         <form onSubmit={handleSubmit}>
           <div style={styles.headerRow}>
-            <span style={styles.colLabel}>Ticker</span>
-            <span style={styles.colLabel}>Shares</span>
+            <span style={{ ...styles.colLabel, flex: 2 }}>Ticker</span>
+            <span style={{ ...styles.colLabel, flex: 2 }}>Shares</span>
+            <span style={{ ...styles.colLabel, flex: 3 }}>Acquired (optional)</span>
             <span style={{ width: 32 }} />
           </div>
 
           {rows.map((row, i) => (
             <div key={i} style={styles.row}>
               <input
-                style={styles.input}
+                style={{ ...styles.input, flex: 2 }}
                 placeholder="AAPL"
                 value={row.ticker}
                 onChange={(e) => update(i, "ticker", e.target.value.toUpperCase())}
               />
               <input
-                style={styles.input}
+                style={{ ...styles.input, flex: 2 }}
                 placeholder="10"
                 type="number"
                 min="0"
                 step="any"
                 value={row.shares}
                 onChange={(e) => update(i, "shares", e.target.value)}
+              />
+              <input
+                style={{ ...styles.input, flex: 3 }}
+                type="date"
+                value={row.acquired_at || ""}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => update(i, "acquired_at", e.target.value)}
               />
               <button
                 type="button"
@@ -93,7 +106,7 @@ export default function EntryForm({ onSubmit, loading }: Props) {
         </form>
 
         <p style={styles.privacy}>
-          Your data is processed in memory and never stored.
+          Your data is processed in memory and never stored on our servers.
         </p>
       </div>
     </div>
@@ -114,7 +127,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: "16px",
     padding: "40px",
     width: "100%",
-    maxWidth: "480px",
+    maxWidth: "600px",
     boxShadow: "0 4px 40px rgba(0,0,0,0.4)",
   },
   title: {
@@ -133,11 +146,11 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     gap: "12px",
     marginBottom: "8px",
+    alignItems: "center",
   },
   colLabel: {
-    flex: 1,
     color: "#8888a0",
-    fontSize: "0.8rem",
+    fontSize: "0.75rem",
     textTransform: "uppercase",
     letterSpacing: "0.05em",
   },
@@ -148,14 +161,15 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
   },
   input: {
-    flex: 1,
     background: "#12121a",
     border: "1px solid #2a2a3a",
     borderRadius: "8px",
     padding: "10px 12px",
     color: "#ffffff",
-    fontSize: "0.95rem",
+    fontSize: "0.9rem",
     outline: "none",
+    minWidth: 0,
+    colorScheme: "dark",
   },
   removeBtn: {
     width: "32px",

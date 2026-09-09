@@ -6,9 +6,10 @@ app = FastAPI(title="PRISM Score API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_methods=["*"],
+    allow_origins=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
+    allow_credentials=False,
 )
 
 app.include_router(portfolio.router)

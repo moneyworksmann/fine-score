@@ -13,6 +13,9 @@ interface Props {
   result: AnalysisResult;
   onBack: () => void;
   onBacktest: () => void;
+  onRefresh: () => void;
+  lastUpdated: Date | null;
+  loading: boolean;
 }
 
 const SUB_LABELS: Record<string, string> = {
@@ -117,8 +120,8 @@ function BenchmarkBar({ label, score, highlight }: { label: string; score: numbe
   );
 }
 
-export default function Dashboard({ result, onBack, onBacktest }: Props) {
-  const { prism_score, benchmarks, sub_scores, sector_weights, correlation_matrix, callout } = result;
+export default function Dashboard({ result, onBack, onBacktest, onRefresh, lastUpdated, loading }: Props) {
+  const { prism_score, benchmarks, sub_scores, sector_weights, correlation_matrix, callout, personal_returns } = result;
   const color = scoreColor(prism_score);
   const label = scoreLabel(prism_score);
 
@@ -138,9 +141,21 @@ export default function Dashboard({ result, onBack, onBacktest }: Props) {
 
         {/* Header */}
         <div style={styles.topBar}>
-          <button style={styles.backBtn} onClick={onBack}>← Back</button>
-          <h2 style={styles.pageTitle}>PRISM Score</h2>
-          <button style={styles.backtestBtn} onClick={onBacktest}>Backtest →</button>
+          <button style={styles.backBtn} onClick={onBack}>← Edit</button>
+          <div style={{ textAlign: "center" }}>
+            <h2 style={styles.pageTitle}>PRISM Score</h2>
+            {lastUpdated && (
+              <p style={styles.lastUpdated}>
+                Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </p>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button style={styles.refreshBtn} onClick={onRefresh} disabled={loading} title="Refresh">
+              {loading ? "…" : "↻"}
+            </button>
+            <button style={styles.backtestBtn} onClick={onBacktest}>Backtest →</button>
+          </div>
         </div>
 
         {/* Score gauge */}
@@ -166,6 +181,34 @@ export default function Dashboard({ result, onBack, onBacktest }: Props) {
             <BenchmarkBar label={benchmarks.three_fund.label} score={benchmarks.three_fund.score} />
           </div>
         </div>
+
+        {/* Personal returns */}
+        {personal_returns && personal_returns.length > 0 && (
+          <div style={styles.card}>
+            <h3 style={styles.cardTitle}>Your Returns Since Purchase</h3>
+            <p style={styles.heatmapHint}>Compared to S&P 500 over the same holding period</p>
+            {personal_returns.map((pr) => (
+              <div key={pr.ticker} style={styles.prRow}>
+                <div style={styles.prLeft}>
+                  <span style={styles.prTicker}>{pr.ticker}</span>
+                  <span style={styles.prDays}>{pr.days_held}d held</span>
+                </div>
+                <div style={styles.prRight}>
+                  <span style={{ color: pr.holding_return_pct >= 0 ? "#22c55e" : "#ef4444", fontWeight: 700 }}>
+                    {pr.holding_return_pct >= 0 ? "+" : ""}{pr.holding_return_pct}%
+                  </span>
+                  <span style={styles.prVsSpy}>
+                    vs SPY {pr.spy_return_pct >= 0 ? "+" : ""}{pr.spy_return_pct}%
+                    {" "}
+                    <span style={{ color: pr.outperforming ? "#22c55e" : "#ef4444" }}>
+                      {pr.outperforming ? "▲" : "▼"}
+                    </span>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Sub-scores */}
         <div style={styles.card}>
@@ -235,4 +278,12 @@ const styles: Record<string, React.CSSProperties> = {
   barFill: { height: "100%", borderRadius: "99px", transition: "width 0.6s ease" },
   heatmapHint: { color: "#555570", fontSize: "0.75rem", margin: "0 0 16px" },
   benchmarkRow: { display: "flex", flexDirection: "column", gap: "16px" },
+  lastUpdated: { color: "#555570", fontSize: "0.72rem", margin: 0 },
+  refreshBtn: { background: "#2a2a3a", border: "none", borderRadius: "8px", color: "#8888a0", padding: "8px 10px", cursor: "pointer", fontSize: "1rem" },
+  prRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #2a2a3a" },
+  prLeft: { display: "flex", flexDirection: "column", gap: "2px" },
+  prTicker: { color: "#ffffff", fontWeight: 600, fontSize: "0.95rem" },
+  prDays: { color: "#555570", fontSize: "0.75rem" },
+  prRight: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" },
+  prVsSpy: { color: "#8888a0", fontSize: "0.78rem" },
 };
