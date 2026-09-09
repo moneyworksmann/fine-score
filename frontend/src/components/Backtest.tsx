@@ -77,7 +77,7 @@ export default function Backtest({ result, onBack }: Props) {
                 tickFormatter={(v) => `${v.toFixed(1)}x`}
               />
               <Tooltip
-                formatter={(v: number) => `${v.toFixed(2)}x`}
+                formatter={(v) => [`${Number(v).toFixed(2)}x`, "Value"]}
                 contentStyle={{ background: "#12121a", border: "none", fontSize: "0.85rem" }}
               />
               <Legend wrapperStyle={{ fontSize: "0.85rem", color: "#ccccdd" }} />

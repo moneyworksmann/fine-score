@@ -44,9 +44,6 @@ function CorrelationHeatmap({ matrix }: { matrix: AnalysisResult["correlation_ma
   const cellSize = Math.min(64, Math.floor(320 / tickers.length));
 
   const cellColor = (val: number) => {
-    const r = Math.round(239 + (val * 16));
-    const g = Math.round(68 - val * 68);
-    const b = Math.round(68 - val * 68);
     const intensity = Math.abs(val);
     if (val > 0.5) return `rgba(239,68,68,${intensity})`;
     if (val > 0) return `rgba(234,179,8,${intensity * 0.8})`;
@@ -233,7 +230,7 @@ export default function Dashboard({ result, onBack, onBacktest, onRefresh, lastU
             <BarChart data={sectorData} layout="vertical" margin={{ left: 16, right: 16 }}>
               <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fill: "#8888a0", fontSize: 11 }} />
               <YAxis type="category" dataKey="name" tick={{ fill: "#ccccdd", fontSize: 12 }} width={110} />
-              <Tooltip formatter={(v: number) => `${v}%`} contentStyle={{ background: "#12121a", border: "none" }} />
+              <Tooltip formatter={(v) => [`${v}%`, "Weight"]} contentStyle={{ background: "#12121a", border: "none" }} />
               <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                 {sectorData.map((_, i) => (
                   <Cell key={i} fill={i === 0 ? "#6c63ff" : "#3a3a55"} />
