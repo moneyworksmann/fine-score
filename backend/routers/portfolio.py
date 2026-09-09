@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List
-from backend.services.prism_score import compute_prism_score
+from typing import List, Optional
+from services.prism_score import compute_prism_score
 
 router = APIRouter(prefix="/api", tags=["portfolio"])
 
@@ -9,6 +9,7 @@ router = APIRouter(prefix="/api", tags=["portfolio"])
 class Holding(BaseModel):
     ticker: str
     shares: float
+    acquired_at: Optional[str] = None
 
 
 class PortfolioRequest(BaseModel):
